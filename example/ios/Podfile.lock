@@ -1,5 +1,5 @@
 PODS:
-  - AmazonIVSPlayer (1.30.0)
+  - AmazonIVSPlayer (1.43.0)
   - boost (1.84.0)
   - DoubleConversion (1.1.6)
   - EXConstants (17.1.7):
@@ -38,7 +38,7 @@ PODS:
   - ExpoFont (13.3.2):
     - ExpoModulesCore
   - ExpoIvsPlayer (0.1.0):
-    - AmazonIVSPlayer (~> 1.30.0)
+    - AmazonIVSPlayer (~> 1.43.0)
     - ExpoModulesCore
   - ExpoKeepAwake (14.1.4):
     - ExpoModulesCore
@@ -1970,7 +1970,7 @@ EXTERNAL SOURCES:
     :path: "../node_modules/react-native/ReactCommon/yoga"
 
 SPEC CHECKSUMS:
-  AmazonIVSPlayer: 1e0715e26c3e3468b1326cdaed75556c5a41701c
+  AmazonIVSPlayer: 958b3d8171d7c8d0c492d1c483308b8681499b1d
   boost: 7e761d76ca2ce687f7cc98e698152abd03a18f90
   DoubleConversion: cb417026b2400c8f53ae97020b2be961b59470cb
   EXConstants: 98bcf0f22b820f9b28f9fee55ff2daededadd2f8
@@ -1978,7 +1978,7 @@ SPEC CHECKSUMS:
   ExpoAsset: ef06e880126c375f580d4923fdd1cdf4ee6ee7d6
   ExpoFileSystem: 7f92f7be2f5c5ed40a7c9efc8fa30821181d9d63
   ExpoFont: cf508bc2e6b70871e05386d71cab927c8524cc8e
-  ExpoIvsPlayer: cf44735127152277ed5f8d41c8c11f559c0bf5f6
+  ExpoIvsPlayer: 61c06b69eabaec3c35b42a8fc3daed3058ee76b9
   ExpoKeepAwake: bf0811570c8da182bfb879169437d4de298376e7
   ExpoModulesCore: 00a1b5c73248465bd0b93f59f8538c4573dac579
   fast_float: 06eeec4fe712a76acc9376682e4808b05ce978b6

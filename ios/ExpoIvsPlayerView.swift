@@ -3,7 +3,7 @@ import AmazonIVSPlayer
 import UIKit
 import AVKit
 
-class ExpoIvsPlayerView: ExpoView, IVSPlayerDelegate {
+class ExpoIvsPlayerView: ExpoView, IVSPlayer.Delegate {
   private var playerView: IVSPlayerView?
   private var player: IVSPlayer?
   private var pipController: AVPictureInPictureController?
@@ -115,12 +115,11 @@ class ExpoIvsPlayerView: ExpoView, IVSPlayerDelegate {
   }
   
   func setupPictureInPicture() {
-    guard pipEnabled, let playerView = playerView else { return }
+    guard pipEnabled else { return }
     
-    if AVPictureInPictureController.isPictureInPictureSupported() {
-      pipController = AVPictureInPictureController(playerLayer: playerView.playerLayer)
-      pipController?.delegate = self
-    }
+    // PiP is not directly supported with IVSPlayerView
+    // This would require custom implementation with AVPlayerLayer
+    // For now, we'll skip PiP support for IVS Player
   }
   
   private func loadStream(_ urlString: String) {
@@ -209,22 +208,23 @@ class ExpoIvsPlayerView: ExpoView, IVSPlayerDelegate {
       stateString = "Ready"
       onLoad(["duration": player.duration])
       
-      if let qualities = player.qualities {
+      let qualities = player.qualities
+      if !qualities.isEmpty {
         let qualitiesData = qualities.map { quality in
           return [
             "name": quality.name,
             "codecs": quality.codecs,
             "bitrate": quality.bitrate,
-            "framerate": quality.framerate ?? 0,
-            "width": quality.width ?? 0,
-            "height": quality.height ?? 0
+            "framerate": quality.framerate,
+            "width": quality.width,
+            "height": quality.height
           ]
         }
         
         onData([
           "qualities": qualitiesData,
           "version": player.version,
-          "sessionId": player.sessionId ?? ""
+          "sessionId": player.sessionId
         ])
       }
       
@@ -266,8 +266,8 @@ class ExpoIvsPlayerView: ExpoView, IVSPlayerDelegate {
     case let metadataCue as IVSTextMetadataCue:
       onTextMetadataCue([
         "type": "metadata",
-        "text": metadataCue.text ?? "",
-        "textDescription": metadataCue.textDescription ?? ""
+        "text": metadataCue.text,
+        "textDescription": metadataCue.textDescription
       ])
     default:
       break
@@ -280,12 +280,12 @@ class ExpoIvsPlayerView: ExpoView, IVSPlayerDelegate {
         "name": quality.name,
         "codecs": quality.codecs,
         "bitrate": quality.bitrate,
-        "framerate": quality.framerate ?? 0,
-        "width": quality.width ?? 0,
-        "height": quality.height ?? 0
+        "framerate": quality.framerate,
+        "width": quality.width,
+        "height": quality.height
       ])
     } else {
-      onQualityChange(nil)
+      onQualityChange([:])
     }
   }
   

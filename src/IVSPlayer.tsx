@@ -18,7 +18,7 @@ const LINKING_ERROR =
   '- You rebuilt the app after installing the package\n' +
   '- You are not using Expo Go\n';
 
-const ComponentName = 'ExpoIvsPlayerView';
+const ComponentName = 'ExpoIvsPlayer';
 
 const ExpoIvsPlayerView =
   UIManager.getViewManagerConfig?.(ComponentName) != null
