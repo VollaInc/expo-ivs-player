@@ -20,7 +20,7 @@ Pod::Spec.new do |s|
   s.dependency 'ExpoModulesCore'
   
   # IVS SDK dependency with configurable version
-  ivs_version = ENV['IVS_PLAYER_VERSION'] || '~> 1.33.0'
+  ivs_version = ENV['IVS_PLAYER_VERSION'] || '~> 1.43.0'
   s.dependency 'AmazonIVSPlayer', ivs_version
 
   # Swift/Objective-C compatibility
