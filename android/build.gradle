@@ -42,13 +42,15 @@ android {
   }
 }
 
+// IVS SDK version can be configured via root project
+def ivsVersion = safeExtGet("ivsPlayerVersion", "1.30.0")
+def kotlinVersion = safeExtGet("kotlinVersion", "2.0.21")
+
 dependencies {
-  // IVS SDK version can be configured via root project
-  def ivsVersion = safeExtGet("ivsPlayerVersion", "1.30.0")
   implementation "com.amazonaws:ivs-player:$ivsVersion"
   
   // Kotlin dependencies
-  implementation "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
+  implementation "org.jetbrains.kotlin:kotlin-stdlib"
   
   // OkHttp for networking
   implementation "com.squareup.okhttp3:okhttp:4.2.2"
