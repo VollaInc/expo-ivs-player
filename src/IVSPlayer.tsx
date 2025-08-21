@@ -1,35 +1,17 @@
-import React, { useRef, useImperativeHandle, forwardRef, useEffect } from 'react';
-import { ViewStyle, requireNativeComponent, UIManager, findNodeHandle, Platform } from 'react-native';
-import { 
-  Quality, 
-  PlayerData, 
-  VideoData, 
-  TextCue, 
-  TextMetadataCue, 
-  Source, 
-  IVSPlayerRef, 
-  ResizeMode 
-} from './types';
-import { LogLevel, PlayerState } from './enums';
-
-const LINKING_ERROR =
-  `The package 'expo-ivs-player' doesn't seem to be linked. Make sure: \n\n` +
-  Platform.select({ ios: "- You have run 'pod install'\n", default: '' }) +
-  '- You rebuilt the app after installing the package\n' +
-  '- You are not using Expo Go\n';
-
-const ComponentName = 'ExpoIvsPlayer';
-
-const ExpoIvsPlayerView =
-  UIManager.getViewManagerConfig?.(ComponentName) != null
-    ? requireNativeComponent<NativeProps>(ComponentName)
-    : () => {
-        throw new Error(LINKING_ERROR);
-      };
-
-interface NativeProps extends IVSPlayerProps {
-  ref?: React.Ref<any>;
-}
+import React, { useRef, useImperativeHandle, forwardRef } from "react";
+import { ViewStyle, NativeModules } from "react-native";
+import { requireNativeViewManager } from "expo-modules-core";
+import {
+  Quality,
+  PlayerData,
+  VideoData,
+  TextCue,
+  TextMetadataCue,
+  Source,
+  IVSPlayerRef,
+  ResizeMode,
+} from "./types";
+import { LogLevel, PlayerState } from "./enums";
 
 export interface IVSPlayerProps {
   style?: ViewStyle;
@@ -72,17 +54,30 @@ export interface IVSPlayerProps {
   onTimePoint?: (position: number) => void;
 }
 
+const ExpoIvsPlayerView = requireNativeViewManager("ExpoIvsPlayer");
+const ExpoIvsPlayerModule = NativeModules.ExpoIvsPlayer;
+
 const IVSPlayer = forwardRef<IVSPlayerRef, IVSPlayerProps>((props, ref) => {
   const nativeRef = useRef<any>(null);
   const sourceIdCounter = useRef(0);
   const sources = useRef<Map<number, Source>>(new Map());
 
-  const dispatchCommand = (commandName: string, args: any[] = []) => {
-    if (nativeRef.current) {
-      const handle = findNodeHandle(nativeRef.current);
-      if (handle) {
-        UIManager.dispatchViewManagerCommand(handle, commandName, args);
-      }
+  const dispatchCommand = async (commandName: string, args: any[] = []) => {
+    if (!ExpoIvsPlayerModule || !ExpoIvsPlayerModule[commandName]) {
+      console.warn(`ExpoIvsPlayer: Command ${commandName} not available`);
+      return;
+    }
+
+    const viewTag = nativeRef.current?._nativeTag;
+    if (!viewTag) {
+      console.warn("ExpoIvsPlayer: Native view not ready");
+      return;
+    }
+
+    try {
+      await ExpoIvsPlayerModule[commandName](viewTag, ...args);
+    } catch (error) {
+      console.error(`ExpoIvsPlayer: Error calling ${commandName}:`, error);
     }
   };
 
@@ -94,84 +89,97 @@ const IVSPlayer = forwardRef<IVSPlayerRef, IVSPlayerProps>((props, ref) => {
         getUri: () => url,
       };
       sources.current.set(id, source);
-      dispatchCommand('preload', [url, id]);
+      dispatchCommand("preload", [url, id]);
       return source;
     },
     loadSource: (source: Source) => {
-      dispatchCommand('loadSource', [source.getId()]);
+      dispatchCommand("loadSource", [source.getId()]);
     },
     releaseSource: (source: Source) => {
       const id = source.getId();
       sources.current.delete(id);
-      dispatchCommand('releaseSource', [id]);
+      dispatchCommand("releaseSource", [id]);
     },
     play: () => {
-      dispatchCommand('play');
+      dispatchCommand("play");
     },
     pause: () => {
-      dispatchCommand('pause');
+      dispatchCommand("pause");
     },
     seekTo: (position: number) => {
-      dispatchCommand('seekTo', [position]);
+      dispatchCommand("seekTo", [position]);
     },
     setOrigin: (origin: string) => {
-      dispatchCommand('setOrigin', [origin]);
+      dispatchCommand("setOrigin", [origin]);
     },
     togglePip: () => {
-      dispatchCommand('togglePip');
+      dispatchCommand("togglePip");
     },
   }));
 
-  useEffect(() => {
-    if (props.streamUrl && props.autoplay) {
-      // Auto-play logic will be handled by native module
-    }
-  }, [props.streamUrl, props.autoplay]);
+  // Process event handlers
+  const processedProps = {
+    ...props,
+    onSeek: props.onSeek
+      ? (event: any) => props.onSeek!(event.nativeEvent.position)
+      : undefined,
+    onData: props.onData
+      ? (event: any) => props.onData!(event.nativeEvent)
+      : undefined,
+    onVideoStatistics: props.onVideoStatistics
+      ? (event: any) => props.onVideoStatistics!(event.nativeEvent)
+      : undefined,
+    onPlayerStateChange: props.onPlayerStateChange
+      ? (event: any) => props.onPlayerStateChange!(event.nativeEvent.state)
+      : undefined,
+    onDurationChange: props.onDurationChange
+      ? (event: any) => props.onDurationChange!(event.nativeEvent.duration)
+      : undefined,
+    onQualityChange: props.onQualityChange
+      ? (event: any) => props.onQualityChange!(event.nativeEvent.quality)
+      : undefined,
+    onPipChange: props.onPipChange
+      ? (event: any) => props.onPipChange!(event.nativeEvent.isActive)
+      : undefined,
+    onRebuffering: props.onRebuffering
+      ? (event: any) => props.onRebuffering!()
+      : undefined,
+    onLoadStart: props.onLoadStart
+      ? (event: any) => props.onLoadStart!()
+      : undefined,
+    onLoad: props.onLoad
+      ? (event: any) => props.onLoad!(event.nativeEvent.duration)
+      : undefined,
+    onLiveLatencyChange: props.onLiveLatencyChange
+      ? (event: any) =>
+          props.onLiveLatencyChange!(event.nativeEvent.liveLatency)
+      : undefined,
+    onTextCue: props.onTextCue
+      ? (event: any) => props.onTextCue!(event.nativeEvent)
+      : undefined,
+    onTextMetadataCue: props.onTextMetadataCue
+      ? (event: any) => props.onTextMetadataCue!(event.nativeEvent)
+      : undefined,
+    onProgress: props.onProgress
+      ? (event: any) => props.onProgress!(event.nativeEvent.progress)
+      : undefined,
+    onError: props.onError
+      ? (event: any) => props.onError!(event.nativeEvent.error)
+      : undefined,
+    onTimePoint: props.onTimePoint
+      ? (event: any) => props.onTimePoint!(event.nativeEvent.position)
+      : undefined,
+  };
 
   return (
     <ExpoIvsPlayerView
       ref={nativeRef}
       style={props.style}
-      testID={props.testID}
-      paused={props.paused}
-      muted={props.muted}
-      loop={props.loop}
-      autoplay={props.autoplay}
-      streamUrl={props.streamUrl}
-      liveLowLatency={props.liveLowLatency}
-      rebufferToLive={props.rebufferToLive}
-      playbackRate={props.playbackRate}
-      logLevel={props.logLevel}
-      resizeMode={props.resizeMode}
-      progressInterval={props.progressInterval}
-      volume={props.volume}
-      quality={props.quality}
-      autoMaxQuality={props.autoMaxQuality}
-      autoQualityMode={props.autoQualityMode}
-      breakpoints={props.breakpoints}
-      maxBitrate={props.maxBitrate}
-      initialBufferDuration={props.initialBufferDuration}
-      pipEnabled={props.pipEnabled}
-      onSeek={props.onSeek}
-      onData={props.onData}
-      onVideoStatistics={props.onVideoStatistics}
-      onPlayerStateChange={props.onPlayerStateChange}
-      onDurationChange={props.onDurationChange}
-      onQualityChange={props.onQualityChange}
-      onPipChange={props.onPipChange}
-      onRebuffering={props.onRebuffering}
-      onLoadStart={props.onLoadStart}
-      onLoad={props.onLoad}
-      onLiveLatencyChange={props.onLiveLatencyChange}
-      onTextCue={props.onTextCue}
-      onTextMetadataCue={props.onTextMetadataCue}
-      onProgress={props.onProgress}
-      onError={props.onError}
-      onTimePoint={props.onTimePoint}
+      {...processedProps}
     />
   );
 });
 
-IVSPlayer.displayName = 'IVSPlayer';
+IVSPlayer.displayName = "IVSPlayer";
 
 export default IVSPlayer;
