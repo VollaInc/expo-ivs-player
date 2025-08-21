@@ -9,7 +9,7 @@ class ExpoIvsPlayerModule : Module() {
     
     View(ExpoIvsPlayerView::class) {
       // Events
-      Events([
+      Events(
         "onSeek",
         "onData",
         "onVideoStatistics",
@@ -26,7 +26,7 @@ class ExpoIvsPlayerModule : Module() {
         "onProgress",
         "onError",
         "onTimePoint"
-      ])
+      )
       
       // Properties
       Prop("streamUrl") { view: ExpoIvsPlayerView, streamUrl: String? ->

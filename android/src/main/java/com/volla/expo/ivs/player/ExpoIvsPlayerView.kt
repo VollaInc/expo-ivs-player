@@ -6,6 +6,7 @@ import android.os.Looper
 import android.util.Log
 import android.view.ViewGroup
 import com.amazonaws.ivs.player.*
+import com.amazonaws.ivs.player.ResizeMode
 import expo.modules.kotlin.AppContext
 import expo.modules.kotlin.viewevent.EventDispatcher
 import expo.modules.kotlin.views.ExpoView
@@ -99,9 +100,8 @@ class ExpoIvsPlayerView(context: Context, appContext: AppContext) : ExpoView(con
         ViewGroup.LayoutParams.MATCH_PARENT
       )
       
-      // Create player
-      player = Player.create(context)
-      playerView?.player = player
+      // Get player from PlayerView (PlayerView creates its own player)
+      player = playerView?.player
       
       // Add player view to this view
       playerView?.let { addView(it) }
@@ -112,7 +112,7 @@ class ExpoIvsPlayerView(context: Context, appContext: AppContext) : ExpoView(con
       
     } catch (e: Exception) {
       Log.e("ExpoIvsPlayerView", "Error setting up player: ${e.message}")
-      onError(mapOf("error" to "Player setup failed: ${e.message}"))
+      this@ExpoIvsPlayerView.onError(mapOf("error" to "Player setup failed: ${e.message}"))
     }
   }
   
@@ -120,7 +120,7 @@ class ExpoIvsPlayerView(context: Context, appContext: AppContext) : ExpoView(con
     player?.let { player ->
       
       // Player state listener
-      player.addListener(object : Player.Listener {
+      player.addListener(object : Player.Listener() {
         override fun onStateChanged(state: Player.State) {
           val stateString = when (state) {
             Player.State.IDLE -> {
@@ -128,10 +128,10 @@ class ExpoIvsPlayerView(context: Context, appContext: AppContext) : ExpoView(con
               "Idle"
             }
             Player.State.READY -> {
-              onLoad(mapOf("duration" to player.duration))
+              this@ExpoIvsPlayerView.onLoad(mapOf("duration" to player.duration))
               
               // Send data event with qualities and session info
-              val qualities = player.qualities.map { quality ->
+              val qualities = player.qualities?.map { quality ->
                 mapOf(
                   "name" to quality.name,
                   "codecs" to quality.codecs,
@@ -140,9 +140,9 @@ class ExpoIvsPlayerView(context: Context, appContext: AppContext) : ExpoView(con
                   "width" to (quality.width ?: 0),
                   "height" to (quality.height ?: 0)
                 )
-              }
+              } ?: emptyList()
               
-              onData(mapOf(
+              this@ExpoIvsPlayerView.onData(mapOf(
                 "qualities" to qualities,
                 "version" to player.version,
                 "sessionId" to (player.sessionId ?: "")
@@ -154,7 +154,7 @@ class ExpoIvsPlayerView(context: Context, appContext: AppContext) : ExpoView(con
               "Ready"
             }
             Player.State.BUFFERING -> {
-              onRebuffering(emptyMap())
+              this@ExpoIvsPlayerView.onRebuffering(emptyMap())
               "Buffering"
             }
             Player.State.PLAYING -> {
@@ -171,78 +171,71 @@ class ExpoIvsPlayerView(context: Context, appContext: AppContext) : ExpoView(con
             }
           }
           
-          onPlayerStateChange(mapOf("state" to stateString))
+          this@ExpoIvsPlayerView.onPlayerStateChange(mapOf("state" to stateString))
         }
         
         override fun onDurationChanged(duration: Long) {
-          val durationSeconds = if (duration >= 0) duration / 1000.0 else null
-          onDurationChange(mapOf("duration" to durationSeconds))
+          val durationSeconds: Any = if (duration >= 0) duration / 1000.0 else null as Any
+          this@ExpoIvsPlayerView.onDurationChange(mapOf<String, Any>("duration" to durationSeconds))
         }
         
-        override fun onQualityChanged(quality: Quality?) {
-          if (quality != null) {
-            onQualityChange(mapOf(
-              "name" to quality.name,
-              "codecs" to quality.codecs,
-              "bitrate" to quality.bitrate,
-              "framerate" to (quality.framerate ?: 0f),
-              "width" to (quality.width ?: 0),
-              "height" to (quality.height ?: 0)
-            ))
-          } else {
-            onQualityChange(mapOf("quality" to null))
-          }
+        override fun onQualityChanged(quality: Quality) {
+          this@ExpoIvsPlayerView.onQualityChange(mapOf(
+            "name" to quality.name,
+            "codecs" to quality.codecs,
+            "bitrate" to quality.bitrate,
+            "framerate" to (quality.framerate ?: 0f),
+            "width" to (quality.width ?: 0),
+            "height" to (quality.height ?: 0)
+          ))
         }
         
         override fun onError(exception: PlayerException) {
-          this@ExpoIvsPlayerView.onError(mapOf("error" to exception.errorMessage))
+          this@ExpoIvsPlayerView.onError(mapOf<String, Any>("error" to (exception.message ?: "Unknown error")))
         }
         
         override fun onRebuffering() {
-          onRebuffering(emptyMap())
+          this@ExpoIvsPlayerView.onRebuffering(emptyMap())
         }
         
         override fun onSeekCompleted(position: Long) {
-          onSeek(mapOf("position" to position / 1000.0))
-        }
-        
-        override fun onVideoStatistics(statistics: VideoStatistics) {
-          onVideoStatistics(mapOf(
-            "bitrate" to statistics.bitrate,
-            "duration" to (statistics.duration ?: 0L) / 1000.0,
-            "framesDecoded" to (statistics.framesDecoded ?: 0L),
-            "framesDropped" to (statistics.framesDropped ?: 0L)
-          ))
+          this@ExpoIvsPlayerView.onSeek(mapOf("position" to position / 1000.0))
         }
         
         override fun onCue(cue: Cue) {
           when (cue) {
             is TextCue -> {
-              onTextCue(mapOf(
+              this@ExpoIvsPlayerView.onTextCue(mapOf(
                 "type" to "text",
                 "text" to cue.text,
                 "line" to cue.line,
                 "size" to cue.size,
-                "position" to cue.position,
-                "textAlignment" to cue.textAlignment.name
+                "position" to cue.position
               ))
             }
             is TextMetadataCue -> {
-              onTextMetadataCue(mapOf(
+              this@ExpoIvsPlayerView.onTextMetadataCue(mapOf(
                 "type" to "metadata",
-                "text" to (cue.text ?: ""),
-                "textDescription" to (cue.textDescription ?: "")
+                "text" to (cue.text ?: "")
               ))
             }
           }
         }
         
-        override fun onMetadata(type: String, data: String) {
+        override fun onMetadata(type: String, data: java.nio.ByteBuffer) {
           // Handle metadata if needed
         }
         
-        override fun onLiveLatencyChanged(latency: Long) {
-          onLiveLatencyChange(mapOf("latency" to latency))
+        override fun onAnalyticsEvent(key: String, value: String) {
+          // Handle analytics events if needed
+        }
+        
+        override fun onVideoSizeChanged(width: Int, height: Int) {
+          // Handle video size changes
+          this@ExpoIvsPlayerView.onVideoStatistics(mapOf(
+            "width" to width,
+            "height" to height
+          ))
         }
       })
     }
@@ -251,21 +244,21 @@ class ExpoIvsPlayerView(context: Context, appContext: AppContext) : ExpoView(con
   private fun setupVideoScaling() {
     playerView?.let { view ->
       when (resizeMode) {
-        "aspectFill" -> view.videoScaleType = PlayerView.VideoScaleType.ZOOM
-        "aspectFit" -> view.videoScaleType = PlayerView.VideoScaleType.FIT
-        "aspectZoom" -> view.videoScaleType = PlayerView.VideoScaleType.FILL
-        else -> view.videoScaleType = PlayerView.VideoScaleType.FIT
+        "aspectFill" -> view.resizeMode = ResizeMode.ZOOM
+        "aspectFit" -> view.resizeMode = ResizeMode.FIT
+        "aspectZoom" -> view.resizeMode = ResizeMode.FILL
+        else -> view.resizeMode = ResizeMode.FIT
       }
     }
   }
   
   private fun loadStream(urlString: String) {
     try {
-      onLoadStart(emptyMap())
+      this@ExpoIvsPlayerView.onLoadStart(emptyMap())
       val uri = android.net.Uri.parse(urlString)
       player?.load(uri)
     } catch (e: Exception) {
-      onError(mapOf("error" to "Invalid URL: $urlString"))
+      this@ExpoIvsPlayerView.onError(mapOf("error" to "Invalid URL: $urlString"))
     }
   }
   
@@ -285,7 +278,7 @@ class ExpoIvsPlayerView(context: Context, appContext: AppContext) : ExpoView(con
         player?.let { player ->
           handler.post {
             val position = player.position / 1000.0
-            onProgress(mapOf("progress" to position))
+            this@ExpoIvsPlayerView.onProgress(mapOf("progress" to position))
           }
         }
       }
@@ -334,7 +327,7 @@ class ExpoIvsPlayerView(context: Context, appContext: AppContext) : ExpoView(con
   fun togglePip() {
     // Picture-in-picture support would require additional Android PiP implementation
     // For now, dispatch event to indicate state
-    onPipChange(mapOf("isActive" to false))
+    this@ExpoIvsPlayerView.onPipChange(mapOf("isActive" to false))
   }
   
   override fun onDetachedFromWindow() {
