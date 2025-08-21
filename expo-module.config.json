@@ -1,0 +1,9 @@
+{
+  "platforms": ["apple", "android", "web"],
+  "apple": {
+    "modules": ["ExpoIvsPlayerModule"]
+  },
+  "android": {
+    "modules": ["com.volla.expo.ivs.player.ExpoIvsPlayerModule"]
+  }
+}
