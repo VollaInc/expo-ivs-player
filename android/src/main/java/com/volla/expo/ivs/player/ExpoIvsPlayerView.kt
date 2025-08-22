@@ -33,7 +33,7 @@ class ExpoIvsPlayerView(context: Context, appContext: AppContext) : ExpoView(con
   private val onTimePoint by EventDispatcher()
   
   // IVS Player components
-  private var playerView: PlayerView? = null
+  internal var playerView: PlayerView? = null
   private var player: Player? = null
   private var progressTimer: Timer? = null
   private val sources = mutableMapOf<Int, String>()
@@ -86,6 +86,7 @@ class ExpoIvsPlayerView(context: Context, appContext: AppContext) : ExpoView(con
   var maxBitrate: Int = 0
   var initialBufferDuration: Double = 0.0
   var autoQualityMode: Boolean = true
+  var showControls: Boolean = false
   
   init {
     setupPlayer()
@@ -99,6 +100,9 @@ class ExpoIvsPlayerView(context: Context, appContext: AppContext) : ExpoView(con
         ViewGroup.LayoutParams.MATCH_PARENT,
         ViewGroup.LayoutParams.MATCH_PARENT
       )
+      
+      // Set controls visibility based on prop
+      playerView?.setControlsEnabled(showControls)
       
       // Get player from PlayerView (PlayerView creates its own player)
       player = playerView?.player
@@ -176,7 +180,9 @@ class ExpoIvsPlayerView(context: Context, appContext: AppContext) : ExpoView(con
         
         override fun onDurationChanged(duration: Long) {
           val durationSeconds: Any? = if (duration >= 0) duration / 1000.0 else null
-          this@ExpoIvsPlayerView.onDurationChange(mapOf<String, Any?>("duration" to durationSeconds))
+          if (durationSeconds != null) {
+            this@ExpoIvsPlayerView.onDurationChange(mapOf<String, Any>("duration" to durationSeconds))
+          }
         }
         
         override fun onQualityChanged(quality: Quality) {

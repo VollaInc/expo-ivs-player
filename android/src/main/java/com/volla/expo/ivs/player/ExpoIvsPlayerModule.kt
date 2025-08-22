@@ -93,6 +93,11 @@ class ExpoIvsPlayerModule : Module() {
         view.autoQualityMode = autoQualityMode
       }
       
+      Prop("showControls") { view: ExpoIvsPlayerView, showControls: Boolean ->
+        view.showControls = showControls
+        view.playerView?.setControlsEnabled(showControls)
+      }
+      
       // Commands
       AsyncFunction("preload") { view: ExpoIvsPlayerView, url: String, sourceId: Int ->
         view.preload(url, sourceId)

@@ -72,6 +72,13 @@ class ExpoIvsPlayerView: ExpoView, IVSPlayer.Delegate {
   var maxBitrate: Int = 0
   var initialBufferDuration: Double = 0
   var autoQualityMode: Bool = true
+  var showControls: Bool = false {
+    didSet {
+      // IVSPlayerView doesn't have built-in controls on iOS
+      // This prop is added for API consistency with Android
+      // Custom controls can be implemented if needed
+    }
+  }
   
   required init(appContext: AppContext? = nil) {
     super.init(appContext: appContext)

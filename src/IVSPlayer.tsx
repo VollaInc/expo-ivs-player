@@ -35,6 +35,7 @@ export interface IVSPlayerProps {
   maxBitrate?: number;
   initialBufferDuration?: number;
   pipEnabled?: boolean;
+  showControls?: boolean;
 
   onSeek?: (position: number) => void;
   onData?: (data: PlayerData) => void;
