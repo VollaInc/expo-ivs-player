@@ -1,8 +1,8 @@
 # Example app
 example/
 
-# Source files (TypeScript)
-src/
+# Source files (TypeScript only - not native sources)
+/src/
 
 # Build artifacts
 *.log
@@ -46,3 +46,7 @@ babel.config.js
 
 # Development
 node_modules/
+
+# Keep native source files
+!android/src/
+!ios/
