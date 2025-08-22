@@ -175,8 +175,8 @@ class ExpoIvsPlayerView(context: Context, appContext: AppContext) : ExpoView(con
         }
         
         override fun onDurationChanged(duration: Long) {
-          val durationSeconds: Any = if (duration >= 0) duration / 1000.0 else null as Any
-          this@ExpoIvsPlayerView.onDurationChange(mapOf<String, Any>("duration" to durationSeconds))
+          val durationSeconds: Any? = if (duration >= 0) duration / 1000.0 else null
+          this@ExpoIvsPlayerView.onDurationChange(mapOf<String, Any?>("duration" to durationSeconds))
         }
         
         override fun onQualityChanged(quality: Quality) {

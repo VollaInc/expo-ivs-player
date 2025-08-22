@@ -1,6 +1,6 @@
 {
   "name": "@vollainc/expo-ivs-player",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "Expo module for Amazon Interactive Video Service (IVS) player",
   "main": "build/index.js",
   "types": "build/index.d.ts",
